@@ -1,0 +1,81 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.app__content {
+  color: black;
+}
+
+.app__subjects {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  color: black;
+}
+
+.app__voteData {
+  width: 50%;
+  background-color: #f9f9f9;
+  padding: 15px;
+  border: 1px solid rgb(174, 174, 174);
+  margin: 50px;
+}
+
+.app_disclaimers {
+  margin: 50px;
+  color: black;
+}
+
+.app__subjects_SE {
+  background-color: #FF8042;
+}
+
+.app__subjects_BS {
+  background-color: #0088FE;
+}
+
+.app__subjects_F {
+  background-color: #FFBB28;
+}
+
+.app__subjects_MS {
+  background-color: #00C49F;
+}
+
+.app__subjects_E {
+  background-color: #DA2700;
+}
+
+.app__subjects_P {
+  background-color: #B110F2;
+}
+
+.copied-message {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #222;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  opacity: 0;
+  animation: fadeInOut 2s;
+  z-index: 1000;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
