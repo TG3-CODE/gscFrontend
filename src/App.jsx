@@ -1,4 +1,5 @@
 import "./App.css";
+import config from './config';
 import meeedly from "./assets/global_summer_challenge_logo.jfif";
 import global from "./assets/meeedly_logo.jfif";
 import { PieChart, Pie, ResponsiveContainer, Cell } from "recharts";
