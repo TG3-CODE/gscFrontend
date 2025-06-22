@@ -187,12 +187,6 @@ function App() {
           >
             Engineering
           </button>
-          <button
-            className="app__subjects_P"
-            onClick={() => addCount("Group F")}
-          >
-            Phyiscs
-          </button>
           <button onClick={resetVote}>Reset Vote</button>
         </div>
 
