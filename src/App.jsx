@@ -79,18 +79,18 @@ function App() {
   }
 
   function getData() {
-    return fetch(`http://localhost:3000/votes`)
-      .then(checkRes)
-      .catch(console.error);
+     return fetch(`${config.API_URL}/votes`)
+     .then(checkRes)
+     .catch(console.error);
   }
 
   function addVote(name) {
-    return fetch(`http://localhost:3000/votes`, {
+    return fetch(`${config.API_URL}/votes`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
-    }).then(checkRes);
-  }
+   }).then(checkRes);
+ }
 
   /*const reset = () => {
     localStorage.setItem("hasVoted", "false");
