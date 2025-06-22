@@ -9,6 +9,9 @@ function App() {
   const [voted, setVoted] = useState(
     localStorage.getItem("hasVoted") === "true"
   );
+  const [userVote, setUserVote] = useState(
+    localStorage.getItem("userVote") || null
+  );
   const [showCopied, setShowCopied] = useState(false);
   const [showFailedCopied, setFailedShowCopied] = useState(false);
 
@@ -79,9 +82,9 @@ function App() {
   }
 
   function getData() {
-     return fetch(`${config.API_URL}/votes`)
-     .then(checkRes)
-     .catch(console.error);
+    return fetch(`${config.API_URL}/votes`)
+      .then(checkRes)
+      .catch(console.error);
   }
 
   function addVote(name) {
@@ -89,22 +92,24 @@ function App() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
-   }).then(checkRes);
- }
+    }).then(checkRes);
+  }
 
-  /*const reset = () => {
-    localStorage.setItem("hasVoted", "false");
-    setVoted(false);
-    console.log(localStorage.getItem("hasVoted"));
-    console.log(voted);
-  };*/
+  // Remove previous vote from backend
+  function removeVote(name) {
+    return fetch(`${config.API_URL}/votes/remove`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    }).then(checkRes);
+  }
 
   const addCount = (groupName) => {
-    console.log(groupName);
+    console.log("Attempting to vote for:", groupName);
     if (!voted) {
       handleVote(groupName);
     } else {
-      alert("already voted");
+      alert("You have already voted! Use 'Reset Vote' to change your vote.");
     }
   };
 
@@ -112,11 +117,54 @@ function App() {
     if (!voted) {
       addVote(groupName).then(() => {
         setVoted(true);
+        setUserVote(groupName);
         localStorage.setItem("hasVoted", "true");
+        localStorage.setItem("userVote", groupName);
         // Fetch updated data from backend after voting
         getData().then((res) => setData(res));
+        alert(`Thank you for voting for ${getSubjectName(groupName)}!`);
+      }).catch((err) => {
+        console.error("Failed to vote:", err);
+        alert("Failed to vote. Please try again.");
       });
     }
+  };
+
+  const resetVote = () => {
+    if (voted && userVote) {
+      // Remove the previous vote from backend
+      removeVote(userVote).then(() => {
+        setVoted(false);
+        setUserVote(null);
+        localStorage.setItem("hasVoted", "false");
+        localStorage.removeItem("userVote");
+        // Fetch updated data from backend after removing vote
+        getData().then((res) => setData(res));
+        alert("Your vote has been reset. You can now vote again!");
+      }).catch((err) => {
+        console.error("Failed to reset vote:", err);
+        // Still allow local reset even if backend fails
+        setVoted(false);
+        setUserVote(null);
+        localStorage.setItem("hasVoted", "false");
+        localStorage.removeItem("userVote");
+        alert("Vote reset locally. You can vote again!");
+      });
+    } else {
+      alert("You haven't voted yet!");
+    }
+  };
+
+  const getSubjectName = (groupName) => {
+    const subjects = {
+      "Group A": "Software Engineering",
+      "Group B": "Business Studies", 
+      "Group C": "Finance",
+      "Group D": "Medical Studies",
+      "Group E": "Engineering",
+      "Group F": "Physics"
+    };
+    return subjects[groupName] || groupName;
   };
 
   const copyLink = () => {
@@ -126,11 +174,11 @@ function App() {
       .writeText(link)
       .then(() => {
         setShowCopied(true);
-        setTimeout(() => setShowCopied(false), 2000); // Show for 2 seconds
+        setTimeout(() => setShowCopied(false), 2000);
       })
       .catch(() => {
         setFailedShowCopied(true);
-        setTimeout(() => setFailedShowCopied(false), 2000); // Show for 2 seconds
+        setTimeout(() => setFailedShowCopied(false), 2000);
       });
   };
 
@@ -141,91 +189,101 @@ function App() {
       })
       .catch((err) => {
         console.error("Failed to fetch votes:", err);
-        setVotes(data); // fallback to prevent crash
+        // Keep existing data as fallback
       });
-  }, [voted]);
+  }, []);
 
   return (
     <div className="app">
       <section className="app__content">
-        <img src={meeedly} />
-        <img src={global} />
+        <img src={meeedly} alt="Meeedly Logo" />
+        <img src={global} alt="Global Summer Challenge Logo" />
         <h2>What's the best subject?</h2>
+        
+        {/* Show voting status */}
+        {voted && (
+          <div style={{ 
+            backgroundColor: "#e8f5e8", 
+            padding: "10px", 
+            borderRadius: "5px", 
+            margin: "10px 0",
+            border: "1px solid #4caf50"
+          }}>
+            <p><strong>✅ You voted for: {getSubjectName(userVote)}</strong></p>
+            <p>Use "Reset Vote" below to change your vote.</p>
+          </div>
+        )}
+
+        {/* Single set of voting buttons */}
         <div className="app__subjects">
           <button
             className="app__subjects_SE"
             onClick={() => addCount("Group A")}
+            disabled={voted}
+            style={{ opacity: voted ? 0.6 : 1 }}
           >
             Software Engineering
           </button>
           <button
             className="app__subjects_BS"
             onClick={() => addCount("Group B")}
+            disabled={voted}
+            style={{ opacity: voted ? 0.6 : 1 }}
           >
             Business Studies
           </button>
           <button
             className="app__subjects_F"
             onClick={() => addCount("Group C")}
+            disabled={voted}
+            style={{ opacity: voted ? 0.6 : 1 }}
           >
             Finance
           </button>
           <button
             className="app__subjects_MS"
             onClick={() => addCount("Group D")}
+            disabled={voted}
+            style={{ opacity: voted ? 0.6 : 1 }}
           >
             Medical Studies
           </button>
           <button
             className="app__subjects_E"
             onClick={() => addCount("Group E")}
+            disabled={voted}
+            style={{ opacity: voted ? 0.6 : 1 }}
           >
             Engineering
           </button>
-          <button onClick={resetVote}>Reset Vote</button>
+          <button
+            className="app__subjects_P"
+            onClick={() => addCount("Group F")}
+            disabled={voted}
+            style={{ opacity: voted ? 0.6 : 1 }}
+          >
+            Physics
+          </button>
         </div>
 
-        {!voted && (
-          <div className="app__subjects">
-            <button
-              className="app__subjects_SE"
-              onClick={() => addCount("Group A")}
-            >
-              Software Engineering
-            </button>
-            <button
-              className="app__subjects_BS"
-              onClick={() => addCount("Group B")}
-            >
-              Business Studies
-            </button>
-            <button
-              className="app__subjects_F"
-              onClick={() => addCount("Group C")}
-            >
-              Finance
-            </button>
-            <button
-              className="app__subjects_MS"
-              onClick={() => addCount("Group D")}
-            >
-              Medical Studies
-            </button>
-            <button
-              className="app__subjects_E"
-              onClick={() => addCount("Group E")}
-            >
-              Engineering
-            </button>
-            <button
-              className="app__subjects_P"
-              onClick={() => addCount("Group F")}
-            >
-              Phyiscs
-            </button>
-          </div>
-        )}
+        {/* Reset vote button */}
+        <div style={{ margin: "20px 0" }}>
+          <button 
+            onClick={resetVote}
+            style={{
+              backgroundColor: "#ff6b6b",
+              color: "white",
+              padding: "10px 20px",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer"
+            }}
+          >
+            Reset Vote
+          </button>
+        </div>
       </section>
+
       <div className="app__voteData">
         <ResponsiveContainer aspect={1}>
           <PieChart>
@@ -249,19 +307,23 @@ function App() {
           </PieChart>
         </ResponsiveContainer>
       </div>
+
       {showCopied && (
         <div className="copied-message">Link copied to clipboard!</div>
       )}
       {showFailedCopied && (
         <div className="copied-message">Failed to copy link.</div>
       )}
+      
       <button onClick={copyLink}>Copy Challenge Page Link</button>
       <a
         target="_blank"
+        rel="noopener noreferrer"
         href="https://www.linkedin.com/showcase/global-summer-challenge/posts/?feedView=all"
       >
-        Click here to visit the Meeedley Global Summer Challenge Page
+        Click here to visit the Meeedly Global Summer Challenge Page
       </a>
+      
       <section className="app_disclaimers">
         <p>
           <b>Disclaimer 1</b> - This program is intended solely for fun and
