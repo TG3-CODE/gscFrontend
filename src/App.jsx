@@ -164,7 +164,7 @@ function App() {
       "Group B": "Business Studies", 
       "Group C": "Finance",
       "Group D": "Medical Studies",
-      "Group E": "Engineering",
+      "Group E": "Electrical Engineering",
       "Group F": "Physics"
     };
     return displayNames[groupName] || groupName;
@@ -176,7 +176,7 @@ function App() {
       "Group B": "📊", // Business Studies
       "Group C": "💰", // Finance
       "Group D": "🩺", // Medical Studies
-      "Group E": "⚙️", // Engineering
+      "Group E": "⚙️", // Electrical Engineering
       "Group F": "🔬" // Physics
     };
     return icons[groupName] || "";
