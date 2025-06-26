@@ -1,7 +1,7 @@
 import "./App.css";
 import config from './config';
-import meeedly from "./assets/global_summer_challenge_logo.jfif";
-import global from "./assets/meeedly_logo.jfif";
+import meeedly from "./assets/meeedly_logo.jfif";
+import global from "./assets/global_summer_challenge_logo.jfif";
 import { PieChart, Pie, ResponsiveContainer, Cell } from "recharts";
 import { useState, useEffect } from "react";
 
@@ -12,6 +12,7 @@ function App() {
   const [userVote, setUserVote] = useState(
     localStorage.getItem("userVote") || null
   );
+  const [selectedSubject, setSelectedSubject] = useState("");
   const [showCopied, setShowCopied] = useState(false);
   const [showFailedCopied, setFailedShowCopied] = useState(false);
 
@@ -43,12 +44,12 @@ function App() {
   ]);
 
   const COLORS = [
-    "#0088FE",
-    "#00C49F",
-    "#FFBB28",
-    "#FF8042",
-    "#DA2700",
-    "#B110F2",
+    "#4A90E2", // Blue for Software Engineering
+    "#50C878", // Green for Business Studies
+    "#FFD700", // Yellow for Finance
+    "#FF6B6B", // Red for Medical Studies
+    "#9B59B6", // Purple for Engineering
+    "#FF8C42", // Orange for Physics
   ];
 
   const renderCustomizedLabel = ({
@@ -71,6 +72,8 @@ function App() {
         fill="black"
         textAnchor={x > cx ? "start" : "end"}
         dominantBaseline="central"
+        fontSize="14"
+        fontWeight="600"
       >
         {`${(percent * 100).toFixed(0)}%`}
       </text>
@@ -104,29 +107,27 @@ function App() {
     }).then(checkRes);
   }
 
-  const addCount = (groupName) => {
-    console.log("Attempting to vote for:", groupName);
-    if (!voted) {
-      handleVote(groupName);
-    } else {
-      alert("You have already voted! Use 'Reset Vote' to change your vote.");
+  const handleVote = () => {
+    if (!selectedSubject) {
+      alert("Please select a subject before voting!");
+      return;
     }
-  };
 
-  const handleVote = (groupName) => {
     if (!voted) {
-      addVote(groupName).then(() => {
+      addVote(selectedSubject).then(() => {
         setVoted(true);
-        setUserVote(groupName);
+        setUserVote(selectedSubject);
         localStorage.setItem("hasVoted", "true");
-        localStorage.setItem("userVote", groupName);
+        localStorage.setItem("userVote", selectedSubject);
         // Fetch updated data from backend after voting
         getData().then((res) => setData(res));
-        alert(`Thank you for voting for ${getSubjectName(groupName)}!`);
+        alert(`Thank you for voting for ${getDisplayName(selectedSubject)}!`);
       }).catch((err) => {
         console.error("Failed to vote:", err);
         alert("Failed to vote. Please try again.");
       });
+    } else {
+      alert("You have already voted! Use 'Reset Vote' to change your vote.");
     }
   };
 
@@ -136,6 +137,7 @@ function App() {
       removeVote(userVote).then(() => {
         setVoted(false);
         setUserVote(null);
+        setSelectedSubject("");
         localStorage.setItem("hasVoted", "false");
         localStorage.removeItem("userVote");
         // Fetch updated data from backend after removing vote
@@ -146,6 +148,7 @@ function App() {
         // Still allow local reset even if backend fails
         setVoted(false);
         setUserVote(null);
+        setSelectedSubject("");
         localStorage.setItem("hasVoted", "false");
         localStorage.removeItem("userVote");
         alert("Vote reset locally. You can vote again!");
@@ -155,8 +158,8 @@ function App() {
     }
   };
 
-  const getSubjectName = (groupName) => {
-    const subjects = {
+  const getDisplayName = (groupName) => {
+    const displayNames = {
       "Group A": "Software Engineering",
       "Group B": "Business Studies", 
       "Group C": "Finance",
@@ -164,7 +167,33 @@ function App() {
       "Group E": "Engineering",
       "Group F": "Physics"
     };
-    return subjects[groupName] || groupName;
+    return displayNames[groupName] || groupName;
+  };
+
+  const getIcon = (groupName) => {
+    const icons = {
+      "Group A": "💻", // Software Engineering
+      "Group B": "📊", // Business Studies
+      "Group C": "💰", // Finance
+      "Group D": "🩺", // Medical Studies
+      "Group E": "⚙️", // Engineering
+      "Group F": "🔬" // Physics
+    };
+    return icons[groupName] || "";
+  };
+
+  const getTotalVotes = () => {
+    return data.reduce((total, item) => total + Number(item.value), 0);
+  };
+
+  const getSortedData = () => {
+    return [...data]
+      .map(item => ({
+        ...item,
+        displayName: getDisplayName(item.name),
+        icon: getIcon(item.name)
+      }))
+      .sort((a, b) => Number(b.value) - Number(a.value));
   };
 
   const copyLink = () => {
@@ -195,118 +224,145 @@ function App() {
 
   return (
     <div className="app">
-      <section className="app__content">
-        <img src={meeedly} alt="Meeedly Logo" />
-        <img src={global} alt="Global Summer Challenge Logo" />
-        <h2>What's the best subject?</h2>
-        
-        {/* Show voting status */}
-        {voted && (
-          <div style={{ 
-            backgroundColor: "#e8f5e8", 
-            padding: "10px", 
-            borderRadius: "5px", 
-            margin: "10px 0",
-            border: "1px solid #4caf50"
-          }}>
-            <p><strong>✅ You voted for: {getSubjectName(userVote)}</strong></p>
-            <p>Use "Reset Vote" below to change your vote.</p>
+      <header className="app__header">
+        <div className="app__logos">
+          <img src={meeedly} alt="Meeedly Logo" className="logo" />
+          <div className="global-challenge">
+            <img src={global} alt="Global Summer Challenge Logo" className="logo" />
           </div>
-        )}
-
-        {/* Single set of voting buttons */}
-        <div className="app__subjects">
-          <button
-            className="app__subjects_SE"
-            onClick={() => addCount("Group A")}
-            disabled={voted}
-            style={{ opacity: voted ? 0.6 : 1 }}
-          >
-            Software Engineering
-          </button>
-          <button
-            className="app__subjects_BS"
-            onClick={() => addCount("Group B")}
-            disabled={voted}
-            style={{ opacity: voted ? 0.6 : 1 }}
-          >
-            Business Studies
-          </button>
-          <button
-            className="app__subjects_F"
-            onClick={() => addCount("Group C")}
-            disabled={voted}
-            style={{ opacity: voted ? 0.6 : 1 }}
-          >
-            Finance
-          </button>
-          <button
-            className="app__subjects_MS"
-            onClick={() => addCount("Group D")}
-            disabled={voted}
-            style={{ opacity: voted ? 0.6 : 1 }}
-          >
-            Medical Studies
-          </button>
-          <button
-            className="app__subjects_E"
-            onClick={() => addCount("Group E")}
-            disabled={voted}
-            style={{ opacity: voted ? 0.6 : 1 }}
-          >
-            Engineering
-          </button>
-          <button
-            className="app__subjects_P"
-            onClick={() => addCount("Group F")}
-            disabled={voted}
-            style={{ opacity: voted ? 0.6 : 1 }}
-          >
-            Physics
-          </button>
         </div>
+      </header>
 
-        {/* Reset vote button */}
-        <div style={{ margin: "20px 0" }}>
-          <button 
-            onClick={resetVote}
-            style={{
-              backgroundColor: "#ff6b6b",
-              color: "white",
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer"
-            }}
-          >
-            Reset Vote
-          </button>
-        </div>
-      </section>
-
-      <div className="app__voteData">
-        <ResponsiveContainer aspect={1}>
-          <PieChart>
-            <Pie
-              data={data.map((d) => ({ ...d, value: Number(d.value) }))}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              outerRadius={80}
-              fill="#8884d8"
-              label={renderCustomizedLabel}
-            >
+      <main className="app__main">
+        <h1 className="app__title">Favorite Subject</h1>
+        <h2 className="app__subtitle">Vote Your Interest!</h2>
+        
+        <div className="app__content-grid">
+          <div className="app__chart-container">
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={data.map((d) => ({ ...d, value: Number(d.value) }))}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  fill="#8884d8"
+                  label={renderCustomizedLabel}
+                >
+                  {data.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            
+            <div className="chart__legend">
               {data.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                />
+                <div key={entry.name} className="legend__item">
+                  <div 
+                    className="legend__color" 
+                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                  ></div>
+                  <span>{getDisplayName(entry.name)}</span>
+                  <span className="legend__percentage">
+                    {getTotalVotes() > 0 ? Math.round((Number(entry.value) / getTotalVotes()) * 100) : 0}%
+                  </span>
+                </div>
               ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
+            </div>
+          </div>
+
+          <div className="app__stats">
+            <div className="stats__card">
+              <h3>Total Votes:</h3>
+              <div className="total-votes">{getTotalVotes()}</div>
+            </div>
+
+            <div className="stats__card top-subjects-card">
+              <h3>Top 5 Subjects</h3>
+              <div className="top-subjects">
+                {getSortedData().slice(0, 5).map((item, index) => (
+                  <div key={item.name} className="subject-item">
+                    <span className="subject-rank">{index + 1}</span>
+                    <span className="subject-icon">{item.icon}</span>
+                    <span className="subject-name">{item.displayName}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="app__voting">
+          <h3>favorite subject</h3>
+          
+          {/* Show voting status */}
+          {voted && (
+            <div className="voting-status">
+              <p><strong>✅ You voted for: {getDisplayName(userVote)}</strong></p>
+              <p>Use "Reset Vote" below to change your vote.</p>
+            </div>
+          )}
+
+          <div className="voting__options">
+            {data.map((item) => (
+              <label key={item.name} className="radio-option">
+                <input
+                  type="radio"
+                  name="subject"
+                  value={item.name}
+                  checked={selectedSubject === item.name}
+                  onChange={(e) => setSelectedSubject(e.target.value)}
+                  disabled={voted}
+                />
+                <span className="radio-custom"></span>
+                <span>{getDisplayName(item.name)}</span>
+              </label>
+            ))}
+          </div>
+
+          <div className="voting__actions">
+            <button 
+              className="submit-btn"
+              onClick={handleVote}
+              disabled={voted || !selectedSubject}
+            >
+              Submit
+            </button>
+            
+            {voted && (
+              <button 
+                className="reset-btn"
+                onClick={resetVote}
+              >
+                Reset Vote
+              </button>
+            )}
+          </div>
+        </div>
+      </main>
+
+      <footer className="app__footer">
+        <div className="footer__content">
+          <p>&copy; 2025 Meeedly</p>
+        </div>
+        
+        <div className="footer__actions">
+          <button onClick={copyLink} className="link-btn">Copy Challenge Page Link</button>
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://www.linkedin.com/showcase/global-summer-challenge/posts/?feedView=all"
+          >
+            Click here to visit the Meeedly Global Summer Challenge Page
+          </a>
+        </div>
+      </footer>
 
       {showCopied && (
         <div className="copied-message">Link copied to clipboard!</div>
@@ -314,15 +370,6 @@ function App() {
       {showFailedCopied && (
         <div className="copied-message">Failed to copy link.</div>
       )}
-      
-      <button onClick={copyLink}>Copy Challenge Page Link</button>
-      <a
-        target="_blank"
-        rel="noopener noreferrer"
-        href="https://www.linkedin.com/showcase/global-summer-challenge/posts/?feedView=all"
-      >
-        Click here to visit the Meeedly Global Summer Challenge Page
-      </a>
       
       <section className="app_disclaimers">
         <p>
