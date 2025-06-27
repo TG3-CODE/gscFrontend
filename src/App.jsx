@@ -7,7 +7,7 @@ import zach from "./assets/zach.jfif";
 import charlene from "./assets/charlene.jpeg";
 import gayatri from "./assets/Gayatri.jpg";
 import ish from "./assets/ish.jfif";
-
+import damla from "./assets/damla.jpeg";
 import { PieChart, Pie, ResponsiveContainer, Cell } from "recharts";
 import { useState, useEffect } from "react";
 import {
@@ -560,7 +560,7 @@ function App() {
           <p className="member__name">Gayatri Talluri</p>
         </div>
         <div className="member">
-          <img src={global} className="member__img"></img>
+          <img src={damla} className="member__img"></img>
           <h3 className="member__title">Member</h3>
           <p className="member__name">Havva Damla Şentürk</p>
         </div>
